@@ -4,6 +4,10 @@ App mobile fintech construida con React Native + Expo, simulando funcionalidades
 
 ---
 
+## Demo
+
+![Demo SIPY](./assets/demo.gif)
+
 ## Credenciales de prueba
 
 | Campo    | Valor        |
