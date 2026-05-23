@@ -1,13 +1,21 @@
-import {
-  View, Text, StyleSheet, ScrollView, Image,
-  TouchableOpacity, ActivityIndicator, Share, Dimensions,
-} from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
-import { getProductById } from '../../../src/services/products.service';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useState } from 'react';
+import {
+  ActivityIndicator,
+  Dimensions,
+  Image,
+  ScrollView,
+  Share,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { QUERY_KEYS } from '../../../src/constants';
 import { useFavorites } from '../../../src/context/FavoritesContext';
-import { useState } from 'react';
+import { getProductById } from '../../../src/services/products.service';
 
 const { width } = Dimensions.get('window');
 
@@ -28,7 +36,7 @@ export default function ProductDetailScreen() {
     if (!product) return;
     try {
       await Share.share({
-        message: `🛍️ *${product.title}*\n💰 Precio: $${product.price}\n⭐ Rating: ${product.rating}\n\n${product.description}\n\nhttps://dummyjson.com/products/${product.id}`,
+        message: `*${product.title}*\n💰 Precio: $${product.price}\n Rating: ${product.rating}\n\n${product.description}\n\nhttps://dummyjson.com/products/${product.id}`,
         title: product.title,
       });
     } catch (e) {}
@@ -46,7 +54,7 @@ export default function ProductDetailScreen() {
   if (isError || !product) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.errorEmoji}>😕</Text>
+        <Ionicons name="alert-circle-outline" size={48} color="#ccc" />
         <Text style={styles.errorText}>No se pudo cargar el producto</Text>
         <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
           <Text style={styles.retryText}>Reintentar</Text>
@@ -62,17 +70,21 @@ export default function ProductDetailScreen() {
       {/* Header flotante */}
       <View style={styles.floatingHeader}>
         <TouchableOpacity style={styles.headerBtn} onPress={() => router.back()}>
-          <Text style={styles.headerBtnIcon}>‹</Text>
+          <Ionicons name="chevron-back" size={22} color="#1A1A2E" />
         </TouchableOpacity>
         <View style={styles.headerRight}>
           <TouchableOpacity style={styles.headerBtn} onPress={handleShare}>
-            <Text style={styles.headerBtnIcon}>⎙</Text>
+            <Ionicons name="share-outline" size={22} color="#1A1A2E" />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.headerBtn}
             onPress={() => toggleFavorite(product)}
           >
-            <Text style={styles.headerBtnIcon}>{favorite ? '❤️' : '🤍'}</Text>
+            <Ionicons
+              name={favorite ? 'heart' : 'heart-outline'}
+              size={22}
+              color={favorite ? '#FF4081' : '#1A1A2E'}
+            />
           </TouchableOpacity>
         </View>
       </View>
@@ -87,10 +99,7 @@ export default function ProductDetailScreen() {
           />
           <View style={styles.dotsRow}>
             {product.images.map((_, i) => (
-              <View
-                key={i}
-                style={[styles.dot, i === selectedImage && styles.dotActive]}
-              />
+              <View key={i} style={[styles.dot, i === selectedImage && styles.dotActive]} />
             ))}
           </View>
         </View>
@@ -109,7 +118,7 @@ export default function ProductDetailScreen() {
                 onPress={() => setSelectedImage(i)}
                 style={[styles.thumbnail, i === selectedImage && styles.thumbnailActive]}
               >
-                <Image source={{ uri: img }} style={styles.thumbnailImage} resizeMode="cover" />
+                <Image source={{ uri: img }} style={styles.thumbnailImage} resizeMode="contain" />
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -126,16 +135,24 @@ export default function ProductDetailScreen() {
           {/* Rating y stock */}
           <View style={styles.metaRow}>
             <View style={styles.ratingContainer}>
-              <Text style={styles.star}>⭐</Text>
+              <Ionicons name="star" size={16} color="#FFB800" />
               <Text style={styles.ratingValue}>{product.rating}</Text>
               <Text style={styles.ratingLabel}> / 5.0</Text>
             </View>
             <View style={[
               styles.stockBadge,
-              product.stock > 20 ? styles.stockGood : styles.stockLow
+              product.stock > 20 ? styles.stockGood : styles.stockLow,
             ]}>
-              <Text style={styles.stockBadgeText}>
-                {product.stock > 20 ? '✓ En stock' : `⚠ Solo ${product.stock} unidades`}
+              <Ionicons
+                name={product.stock > 20 ? 'checkmark-circle-outline' : 'warning-outline'}
+                size={13}
+                color={product.stock > 20 ? '#2E7D32' : '#E65100'}
+              />
+              <Text style={[
+                styles.stockBadgeText,
+                { color: product.stock > 20 ? '#2E7D32' : '#E65100' }
+              ]}>
+                {product.stock > 20 ? 'En stock' : `Solo ${product.stock} unidades`}
               </Text>
             </View>
           </View>
@@ -143,8 +160,9 @@ export default function ProductDetailScreen() {
           {/* Descuento */}
           {product.discountPercentage > 0 && (
             <View style={styles.discountRow}>
+              <Ionicons name="pricetag-outline" size={14} color="#F57C00" />
               <Text style={styles.discountText}>
-                🏷️ {product.discountPercentage.toFixed(1)}% de descuento
+                {product.discountPercentage.toFixed(1)}% de descuento
               </Text>
               <Text style={styles.originalPrice}>
                 ${(product.price / (1 - product.discountPercentage / 100)).toFixed(2)}
@@ -155,10 +173,7 @@ export default function ProductDetailScreen() {
           {/* Descripción */}
           <View style={styles.descSection}>
             <Text style={styles.descTitle}>Descripción</Text>
-            <Text
-              style={styles.descText}
-              numberOfLines={expanded ? undefined : 3}
-            >
+            <Text style={styles.descText} numberOfLines={expanded ? undefined : 3}>
               {product.description}
             </Text>
             <TouchableOpacity onPress={() => setExpanded((v) => !v)}>
@@ -192,9 +207,14 @@ export default function ProductDetailScreen() {
           style={[styles.favBottomBtn, favorite && styles.favBottomBtnActive]}
           onPress={() => toggleFavorite(product)}
         >
-          <Text style={styles.favBottomIcon}>{favorite ? '❤️' : '🤍'}</Text>
+          <Ionicons
+            name={favorite ? 'heart' : 'heart-outline'}
+            size={22}
+            color={favorite ? '#FF4081' : '#999'}
+          />
         </TouchableOpacity>
         <TouchableOpacity style={styles.addCartBtn} onPress={handleShare}>
+          <Ionicons name="logo-whatsapp" size={20} color="#fff" style={{ marginRight: 8 }} />
           <Text style={styles.addCartText}>Compartir por WhatsApp</Text>
         </TouchableOpacity>
       </View>
@@ -206,7 +226,6 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
   loadingText: { color: '#888', fontSize: 14 },
-  errorEmoji: { fontSize: 48 },
   errorText: { fontSize: 16, color: '#333', fontWeight: '600' },
   retryButton: {
     backgroundColor: '#3B4FE4', borderRadius: 10,
@@ -214,38 +233,35 @@ const styles = StyleSheet.create({
   },
   retryText: { color: '#fff', fontWeight: '600' },
   floatingHeader: {
-    position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10,
     flexDirection: 'row', justifyContent: 'space-between',
-    alignItems: 'center', paddingTop: 56, paddingHorizontal: 16, paddingBottom: 8,
+    alignItems: 'center', paddingTop: 60, paddingHorizontal: 16,
+    paddingBottom: 8, backgroundColor: '#fff',
+    borderBottomWidth: 1, borderBottomColor: '#F5F5F5',
   },
   headerRight: { flexDirection: 'row', gap: 8 },
   headerBtn: {
     width: 40, height: 40, borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.92)',
-    justifyContent: 'center', alignItems: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1, shadowRadius: 4, elevation: 2,
-  },
-  headerBtnIcon: { fontSize: 22, color: '#1A1A2E', fontWeight: '600' },
-  gallery: {
-    width: width, height: 300,
     backgroundColor: '#F5F6FA',
     justifyContent: 'center', alignItems: 'center',
   },
-  mainImage: { width: width, height: 280 },
+  gallery: {
+    width: width, height: 280,
+    backgroundColor: '#F9F9F9',
+    justifyContent: 'center', alignItems: 'center',
+  },
+  mainImage: { width: width - 40, height: 260 },
   dotsRow: {
     flexDirection: 'row', justifyContent: 'center',
     gap: 6, position: 'absolute', bottom: 12,
   },
-  dot: {
-    width: 6, height: 6, borderRadius: 3, backgroundColor: '#ccc',
-  },
+  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#ddd' },
   dotActive: { backgroundColor: '#3B4FE4', width: 16 },
-  thumbnailRow: { paddingVertical: 12, backgroundColor: '#F5F6FA' },
+  thumbnailRow: { paddingVertical: 12, backgroundColor: '#F9F9F9' },
   thumbnail: {
-    width: 60, height: 60, borderRadius: 10,
+    width: 64, height: 64, borderRadius: 10,
     marginRight: 10, borderWidth: 2, borderColor: 'transparent',
-    overflow: 'hidden',
+    overflow: 'hidden', backgroundColor: '#fff',
+    justifyContent: 'center', alignItems: 'center',
   },
   thumbnailActive: { borderColor: '#3B4FE4' },
   thumbnailImage: { width: '100%', height: '100%' },
@@ -264,21 +280,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center',
     justifyContent: 'space-between', marginTop: 12,
   },
-  ratingContainer: { flexDirection: 'row', alignItems: 'center' },
-  star: { fontSize: 16 },
-  ratingValue: { fontSize: 16, fontWeight: '700', color: '#1A1A2E', marginLeft: 4 },
+  ratingContainer: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  ratingValue: { fontSize: 16, fontWeight: '700', color: '#1A1A2E' },
   ratingLabel: { fontSize: 13, color: '#888' },
-  stockBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
+  stockBadge: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20,
+  },
   stockGood: { backgroundColor: '#E8F5E9' },
   stockLow: { backgroundColor: '#FFF3E0' },
-  stockBadgeText: { fontSize: 12, fontWeight: '600', color: '#333' },
+  stockBadgeText: { fontSize: 12, fontWeight: '600' },
   discountRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
+    flexDirection: 'row', alignItems: 'center', gap: 8,
     marginTop: 10, backgroundColor: '#FFF8E1',
     padding: 10, borderRadius: 10,
   },
   discountText: { fontSize: 13, color: '#F57C00', fontWeight: '600' },
-  originalPrice: { fontSize: 13, color: '#999', textDecorationLine: 'line-through' },
+  originalPrice: { fontSize: 13, color: '#bbb', textDecorationLine: 'line-through' },
   descSection: { marginTop: 20 },
   descTitle: { fontSize: 16, fontWeight: '700', color: '#1A1A2E', marginBottom: 8 },
   descText: { fontSize: 14, color: '#555', lineHeight: 22 },
@@ -301,10 +319,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center', alignItems: 'center',
   },
   favBottomBtnActive: { borderColor: '#FF4081', backgroundColor: '#FFF0F5' },
-  favBottomIcon: { fontSize: 22 },
   addCartBtn: {
     flex: 1, backgroundColor: '#3B4FE4', borderRadius: 14,
-    justifyContent: 'center', alignItems: 'center', height: 52,
+    flexDirection: 'row', justifyContent: 'center', alignItems: 'center', height: 52,
   },
   addCartText: { color: '#fff', fontSize: 15, fontWeight: '700' },
 });

@@ -5,6 +5,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useFavorites } from '../../../src/context/FavoritesContext';
 import { Product } from '../../../src/types';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function FavoritesScreen() {
   const { favorites, toggleFavorite, clearFavorites } = useFavorites();
@@ -31,19 +32,17 @@ export default function FavoritesScreen() {
       <View style={styles.info}>
         <Text style={styles.category}>{item.category}</Text>
         <Text style={styles.title} numberOfLines={2}>{item.title}</Text>
-        <View style={styles.metaRow}>
-          <Text style={styles.price}>${item.price}</Text>
-          <View style={styles.ratingRow}>
-            <Text style={styles.star}>⭐</Text>
-            <Text style={styles.rating}>{item.rating}</Text>
-          </View>
+        <Text style={styles.price}>${item.price}</Text>
+        <View style={styles.ratingRow}>
+          <Ionicons name="star" size={12} color="#FFB800" />
+          <Text style={styles.rating}>{item.rating}</Text>
         </View>
       </View>
       <TouchableOpacity
         style={styles.removeBtn}
         onPress={() => toggleFavorite(item)}
       >
-        <Text style={styles.removeIcon}>❤️</Text>
+        <Ionicons name="heart" size={24} color="#FF4081" />
       </TouchableOpacity>
     </TouchableOpacity>
   );
@@ -61,7 +60,7 @@ export default function FavoritesScreen() {
 
       {favorites.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyEmoji}>❤️</Text>
+          <Ionicons name="heart-outline" size={64} color="#ddd" />
           <Text style={styles.emptyTitle}>Aún no tienes favoritos</Text>
           <Text style={styles.emptySub}>
             Explora productos y agrégalos a tus favoritos
@@ -113,27 +112,26 @@ const styles = StyleSheet.create({
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05, shadowRadius: 6, elevation: 2,
   },
-  image: { width: 80, height: 80, borderRadius: 12, resizeMode: 'cover' },
-  info: { flex: 1, gap: 3 },
+  image: {
+    width: 80, height: 80, borderRadius: 12,
+    resizeMode: 'contain', backgroundColor: '#F9F9F9',
+  },
+  info: { flex: 1, gap: 2 },
   category: {
     fontSize: 10, color: '#3B4FE4', fontWeight: '700',
     textTransform: 'uppercase',
   },
   title: { fontSize: 14, fontWeight: '600', color: '#1A1A2E', lineHeight: 19 },
-  metaRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 },
-  price: { fontSize: 16, fontWeight: '800', color: '#1A1A2E' },
-  ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 2 },
-  star: { fontSize: 12 },
+  price: { fontSize: 16, fontWeight: '800', color: '#1A1A2E', marginTop: 2 },
+  ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
   rating: { fontSize: 12, color: '#888' },
   removeBtn: {
-    width: 36, height: 36, justifyContent: 'center', alignItems: 'center',
+    width: 40, height: 40, justifyContent: 'center', alignItems: 'center',
   },
-  removeIcon: { fontSize: 22 },
   emptyContainer: {
     flex: 1, justifyContent: 'center', alignItems: 'center',
     paddingHorizontal: 40, gap: 10,
   },
-  emptyEmoji: { fontSize: 64, marginBottom: 8 },
   emptyTitle: { fontSize: 20, fontWeight: '700', color: '#1A1A2E' },
   emptySub: { fontSize: 14, color: '#888', textAlign: 'center', lineHeight: 20 },
   exploreBtn: {

@@ -1,16 +1,23 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  View, Text, StyleSheet, FlatList, TextInput,
-  TouchableOpacity, Image, ActivityIndicator,
+  ActivityIndicator,
+  FlatList,
+  Image,
   RefreshControl, ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
-import { useRouter, useLocalSearchParams } from 'expo-router';
-import { getCategories, getProducts, getProductsByCategory, searchProducts } from '../../../src/services/products.service';
+import { ProductListSkeleton } from '../../../src/components/SkeletonLoader';
 import { QUERY_KEYS } from '../../../src/constants';
 import { useFavorites } from '../../../src/context/FavoritesContext';
+import { getCategories, getProducts, getProductsByCategory, searchProducts } from '../../../src/services/products.service';
 import { Product } from '../../../src/types';
-import { ProductListSkeleton } from '../../../src/components/SkeletonLoader';
 
 const SORT_OPTIONS = [
   { key: 'default', label: 'Relevancia' },
@@ -34,6 +41,11 @@ export default function ExploreScreen() {
   );
   const [sortKey, setSortKey] = useState('default');
   const [showSort, setShowSort] = useState(false);
+
+  useEffect(() => {
+    if (params.category) setSelectedCategory(params.category as string);
+    if (params.q) { setSearch(params.q as string); setSearchQuery(params.q as string); }
+  }, [params.category, params.q]);
 
   const { data: categoriesData } = useQuery({
     queryKey: [QUERY_KEYS.CATEGORIES],
@@ -108,6 +120,8 @@ export default function ExploreScreen() {
     setSearch('');
   };
 
+  const selectedCategoryName = categoriesData?.find(c => c.slug === selectedCategory)?.name;
+
   const renderProduct = useCallback(({ item }: { item: Product }) => (
     <TouchableOpacity
       style={styles.productCard}
@@ -116,8 +130,15 @@ export default function ExploreScreen() {
     >
       <View style={styles.imageContainer}>
         <Image source={{ uri: item.thumbnail }} style={styles.productImage} />
-        <TouchableOpacity style={styles.favButton} onPress={() => toggleFavorite(item)}>
-          <Text style={styles.favIcon}>{isFavorite(item.id) ? '❤️' : '🤍'}</Text>
+        <TouchableOpacity
+          style={styles.favButton}
+          onPress={() => toggleFavorite(item)}
+        >
+          <Ionicons
+            name={isFavorite(item.id) ? 'heart' : 'heart-outline'}
+            size={18}
+            color={isFavorite(item.id) ? '#FF4081' : '#ccc'}
+          />
         </TouchableOpacity>
         {item.stock < 10 && (
           <View style={styles.badge}>
@@ -126,16 +147,12 @@ export default function ExploreScreen() {
         )}
       </View>
       <View style={styles.productInfo}>
-        <Text style={styles.productCategory}>{item.category}</Text>
         <Text style={styles.productTitle} numberOfLines={2}>{item.title}</Text>
-        <View style={styles.productBottom}>
-          <Text style={styles.productPrice}>${item.price}</Text>
-          <View style={styles.ratingRow}>
-            <Text style={styles.star}>⭐</Text>
-            <Text style={styles.ratingText}>{item.rating}</Text>
-          </View>
+        <Text style={styles.productPrice}>${item.price}</Text>
+        <View style={styles.ratingRow}>
+          <Ionicons name="star" size={11} color="#FFB800" />
+          <Text style={styles.ratingText}>{item.rating}</Text>
         </View>
-        <Text style={styles.stockText}>Stock: {item.stock}</Text>
       </View>
     </TouchableOpacity>
   ), [isFavorite, toggleFavorite]);
@@ -153,7 +170,7 @@ export default function ExploreScreen() {
     if (isLoading) return null;
     return (
       <View style={styles.emptyContainer}>
-        <Text style={styles.emptyEmoji}>🔍</Text>
+        <Ionicons name="search-outline" size={48} color="#ccc" />
         <Text style={styles.emptyText}>No se encontraron productos</Text>
         <Text style={styles.emptySub}>Intenta con otra búsqueda o categoría</Text>
       </View>
@@ -162,13 +179,17 @@ export default function ExploreScreen() {
 
   return (
     <View style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Explorar</Text>
+        <Text style={styles.headerTitle}>
+          {selectedCategoryName ?? 'Explorar'}
+        </Text>
       </View>
 
+      {/* Buscador */}
       <View style={styles.searchRow}>
         <View style={styles.searchContainer}>
-          <Text style={styles.searchIcon}>🔍</Text>
+          <Ionicons name="search-outline" size={18} color="#999" style={{ marginRight: 8 }} />
           <TextInput
             style={styles.searchInput}
             placeholder="Buscar productos..."
@@ -180,20 +201,20 @@ export default function ExploreScreen() {
           />
           {search.length > 0 && (
             <TouchableOpacity onPress={() => { setSearch(''); setSearchQuery(''); }}>
-              <Text style={styles.clearIcon}>✕</Text>
+              <Ionicons name="close-circle" size={18} color="#ccc" />
             </TouchableOpacity>
           )}
         </View>
-        <TouchableOpacity
-          style={[styles.sortButton, showSort && styles.sortButtonActive]}
-          onPress={() => setShowSort((v) => !v)}
-        >
-          <Text style={styles.sortIcon}>⇅</Text>
-        </TouchableOpacity>
       </View>
 
+      {/* Sort options */}
       {showSort && (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.sortRow}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.sortRow}
+          contentContainerStyle={{ paddingHorizontal: 16 }}
+        >
           {SORT_OPTIONS.map((opt) => (
             <TouchableOpacity
               key={opt.key}
@@ -208,33 +229,36 @@ export default function ExploreScreen() {
         </ScrollView>
       )}
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.categoriesRow}
-        contentContainerStyle={{ paddingHorizontal: 16 }}
-      >
-        <TouchableOpacity
-          style={[styles.categoryChip, selectedCategory === '' && styles.categoryChipActive]}
-          onPress={() => handleCategorySelect('')}
+      {/* Categorías — siempre visibles */}
+      <View style={styles.categoriesWrapper}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.categoriesContent}
         >
-          <Text style={[styles.categoryChipText, selectedCategory === '' && styles.categoryChipTextActive]}>
-            Todos
-          </Text>
-        </TouchableOpacity>
-        {categoriesData?.map((cat) => (
           <TouchableOpacity
-            key={cat.slug}
-            style={[styles.categoryChip, selectedCategory === cat.slug && styles.categoryChipActive]}
-            onPress={() => handleCategorySelect(cat.slug)}
+            style={[styles.categoryChip, selectedCategory === '' && styles.categoryChipActive]}
+            onPress={() => handleCategorySelect('')}
           >
-            <Text style={[styles.categoryChipText, selectedCategory === cat.slug && styles.categoryChipTextActive]}>
-              {cat.name}
+            <Text style={[styles.categoryChipText, selectedCategory === '' && styles.categoryChipTextActive]}>
+              Todos
             </Text>
           </TouchableOpacity>
-        ))}
-      </ScrollView>
+          {categoriesData?.map((cat) => (
+            <TouchableOpacity
+              key={cat.slug}
+              style={[styles.categoryChip, selectedCategory === cat.slug && styles.categoryChipActive]}
+              onPress={() => handleCategorySelect(cat.slug)}
+            >
+              <Text style={[styles.categoryChipText, selectedCategory === cat.slug && styles.categoryChipTextActive]}>
+                {cat.name}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
 
+      {/* Lista */}
       {isLoading ? (
         <ScrollView>
           <ProductListSkeleton />
@@ -272,43 +296,49 @@ export default function ExploreScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F5F6FA' },
   header: {
-    paddingTop: 60, paddingHorizontal: 20, paddingBottom: 12,
+    flexDirection: 'row', justifyContent: 'space-between',
+    alignItems: 'center', paddingTop: 60, paddingHorizontal: 20,
+    paddingBottom: 12, backgroundColor: '#fff',
+  },
+  headerTitle: { fontSize: 22, fontWeight: '800', color: '#1A1A2E' },
+  headerActions: { flexDirection: 'row', gap: 8 },
+  headerBtn: {
+    width: 38, height: 38, borderRadius: 10,
+    backgroundColor: '#F5F6FA', justifyContent: 'center', alignItems: 'center',
+  },
+  searchRow: {
+    paddingHorizontal: 16, paddingVertical: 10,
     backgroundColor: '#fff',
   },
-  headerTitle: { fontSize: 24, fontWeight: '800', color: '#1A1A2E' },
-  searchRow: {
-    flexDirection: 'row', paddingHorizontal: 16, paddingVertical: 10,
-    backgroundColor: '#fff', gap: 10, alignItems: 'center',
-  },
   searchContainer: {
-    flex: 1, flexDirection: 'row', alignItems: 'center',
+    flexDirection: 'row', alignItems: 'center',
     backgroundColor: '#F5F6FA', borderRadius: 12,
-    paddingHorizontal: 12, borderWidth: 1, borderColor: '#E8E8E8',
+    paddingHorizontal: 14, height: 46,
+    borderWidth: 1, borderColor: '#EFEFEF',
   },
-  searchIcon: { fontSize: 16, marginRight: 8 },
-  searchInput: { flex: 1, paddingVertical: 10, fontSize: 15, color: '#333' },
-  clearIcon: { fontSize: 14, color: '#999', paddingLeft: 8 },
-  sortButton: {
-    width: 44, height: 44, borderRadius: 12, backgroundColor: '#F5F6FA',
-    justifyContent: 'center', alignItems: 'center',
-    borderWidth: 1, borderColor: '#E8E8E8',
+  searchInput: { flex: 1, fontSize: 15, color: '#333' },
+  sortRow: {
+    backgroundColor: '#fff', paddingVertical: 8,
+    borderBottomWidth: 1, borderBottomColor: '#F0F0F0',
   },
-  sortButtonActive: { backgroundColor: '#3B4FE4', borderColor: '#3B4FE4' },
-  sortIcon: { fontSize: 20, color: '#333' },
-  sortRow: { backgroundColor: '#fff', paddingVertical: 8, paddingLeft: 16 },
   sortChip: {
-    paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20,
+    paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20,
     backgroundColor: '#F5F6FA', marginRight: 8,
     borderWidth: 1, borderColor: '#E8E8E8',
   },
   sortChipActive: { backgroundColor: '#3B4FE4', borderColor: '#3B4FE4' },
   sortChipText: { fontSize: 13, color: '#555', fontWeight: '500' },
   sortChipTextActive: { color: '#fff' },
-  categoriesRow: { backgroundColor: '#fff', paddingVertical: 10, maxHeight: 52 },
+  categoriesWrapper: {
+    backgroundColor: '#fff',
+    borderBottomWidth: 1, borderBottomColor: '#F0F0F0',
+  },
+  categoriesContent: {
+    paddingHorizontal: 16, paddingVertical: 10, gap: 8,
+  },
   categoryChip: {
-    paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20,
-    backgroundColor: '#F5F6FA', marginRight: 8,
-    borderWidth: 1, borderColor: '#E8E8E8',
+    paddingHorizontal: 16, paddingVertical: 7, borderRadius: 20,
+    backgroundColor: '#F5F6FA', borderWidth: 1, borderColor: '#EFEFEF',
   },
   categoryChipActive: { backgroundColor: '#3B4FE4', borderColor: '#3B4FE4' },
   categoryChipText: { fontSize: 13, color: '#555', fontWeight: '500' },
@@ -322,14 +352,15 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06, shadowRadius: 8, elevation: 2,
   },
   imageContainer: { position: 'relative' },
-  productImage: { width: '100%', height: 140, resizeMode: 'cover' },
+  productImage: { width: '100%', height: 150, resizeMode: 'contain', backgroundColor: '#F9F9F9' },
   favButton: {
     position: 'absolute', top: 8, right: 8,
-    backgroundColor: 'rgba(255,255,255,0.9)',
-    borderRadius: 20, width: 32, height: 32,
+    backgroundColor: '#fff', borderRadius: 20,
+    width: 32, height: 32,
     justifyContent: 'center', alignItems: 'center',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1, shadowRadius: 3, elevation: 2,
   },
-  favIcon: { fontSize: 16 },
   badge: {
     position: 'absolute', bottom: 8, left: 8,
     backgroundColor: '#FF6B35', borderRadius: 6,
@@ -337,17 +368,12 @@ const styles = StyleSheet.create({
   },
   badgeText: { color: '#fff', fontSize: 10, fontWeight: '700' },
   productInfo: { padding: 10 },
-  productCategory: { fontSize: 10, color: '#3B4FE4', fontWeight: '600', textTransform: 'uppercase' },
-  productTitle: { fontSize: 13, fontWeight: '600', color: '#1A1A2E', marginTop: 2, lineHeight: 18 },
-  productBottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 },
-  productPrice: { fontSize: 15, fontWeight: '800', color: '#1A1A2E' },
-  ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 2 },
-  star: { fontSize: 11 },
-  ratingText: { fontSize: 11, color: '#888' },
-  stockText: { fontSize: 10, color: '#999', marginTop: 2 },
+  productTitle: { fontSize: 13, fontWeight: '600', color: '#1A1A2E', lineHeight: 18, marginBottom: 4 },
+  productPrice: { fontSize: 15, fontWeight: '800', color: '#1A1A2E', marginBottom: 4 },
+  ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  ratingText: { fontSize: 12, color: '#888' },
   footerLoader: { paddingVertical: 20, alignItems: 'center' },
   emptyContainer: { flex: 1, alignItems: 'center', paddingTop: 60, gap: 8 },
-  emptyEmoji: { fontSize: 48 },
   emptyText: { fontSize: 16, fontWeight: '600', color: '#333' },
   emptySub: { fontSize: 13, color: '#888' },
 });

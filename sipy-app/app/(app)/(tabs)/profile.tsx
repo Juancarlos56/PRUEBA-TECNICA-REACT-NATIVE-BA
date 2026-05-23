@@ -5,10 +5,11 @@ import {
 import { useAuth } from '../../../src/context/AuthContext';
 import { useFavorites } from '../../../src/context/FavoritesContext';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
-  const { favorites, clearFavorites } = useFavorites();
+  const { favorites } = useFavorites();
   const router = useRouter();
 
   const handleLogout = () => {
@@ -30,9 +31,30 @@ export default function ProfileScreen() {
   };
 
   const menuItems = [
-    { icon: '❤️', label: 'Mis favoritos', value: `${favorites.length} productos`, onPress: () => router.push('/(app)/(tabs)/favorites') },
-    { icon: '🔍', label: 'Explorar productos', value: '', onPress: () => router.push('/(app)/(tabs)/explore') },
-    { icon: '🏠', label: 'Ir al inicio', value: '', onPress: () => router.push('/(app)/(tabs)/home') },
+    {
+      icon: 'heart' as const,
+      color: '#FF4081',
+      bg: '#FFF0F5',
+      label: 'Mis favoritos',
+      value: `${favorites.length} productos`,
+      onPress: () => router.push('/(app)/(tabs)/favorites'),
+    },
+    {
+      icon: 'search' as const,
+      color: '#3B4FE4',
+      bg: '#E8EAFF',
+      label: 'Explorar productos',
+      value: '',
+      onPress: () => router.push('/(app)/(tabs)/explore'),
+    },
+    {
+      icon: 'home' as const,
+      color: '#FF9800',
+      bg: '#FFF3E0',
+      label: 'Ir al inicio',
+      value: '',
+      onPress: () => router.push('/(app)/(tabs)/home'),
+    },
   ];
 
   return (
@@ -82,11 +104,13 @@ export default function ProfileScreen() {
             style={styles.menuItem}
             onPress={item.onPress}
           >
-            <Text style={styles.menuIcon}>{item.icon}</Text>
+            <View style={[styles.menuIconWrapper, { backgroundColor: item.bg }]}>
+              <Ionicons name={item.icon} size={18} color={item.color} />
+            </View>
             <Text style={styles.menuLabel}>{item.label}</Text>
             <View style={styles.menuRight}>
               {item.value ? <Text style={styles.menuValue}>{item.value}</Text> : null}
-              <Text style={styles.menuArrow}>›</Text>
+              <Ionicons name="chevron-forward" size={16} color="#ccc" />
             </View>
           </TouchableOpacity>
         ))}
@@ -96,22 +120,31 @@ export default function ProfileScreen() {
       <View style={styles.menuSection}>
         <Text style={styles.menuSectionTitle}>Información de cuenta</Text>
         <View style={styles.infoItem}>
-          <Text style={styles.infoLabel}>Usuario</Text>
+          <View style={styles.infoLeft}>
+            <Ionicons name="person-outline" size={16} color="#888" />
+            <Text style={styles.infoLabel}>Usuario</Text>
+          </View>
           <Text style={styles.infoValue}>{user?.username}</Text>
         </View>
         <View style={styles.infoItem}>
-          <Text style={styles.infoLabel}>Email</Text>
-          <Text style={styles.infoValue}>{user?.email}</Text>
+          <View style={styles.infoLeft}>
+            <Ionicons name="mail-outline" size={16} color="#888" />
+            <Text style={styles.infoLabel}>Email</Text>
+          </View>
+          <Text style={styles.infoValue} numberOfLines={1}>{user?.email}</Text>
         </View>
         <View style={styles.infoItem}>
-          <Text style={styles.infoLabel}>Nombre</Text>
+          <View style={styles.infoLeft}>
+            <Ionicons name="id-card-outline" size={16} color="#888" />
+            <Text style={styles.infoLabel}>Nombre</Text>
+          </View>
           <Text style={styles.infoValue}>{user?.firstName} {user?.lastName}</Text>
         </View>
       </View>
 
       {/* Logout */}
       <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-        <Text style={styles.logoutIcon}>🚪</Text>
+        <Ionicons name="log-out-outline" size={20} color="#E53935" />
         <Text style={styles.logoutText}>Cerrar sesión</Text>
       </TouchableOpacity>
 
@@ -145,7 +178,7 @@ const styles = StyleSheet.create({
   statsRow: {
     flexDirection: 'row', alignItems: 'center',
     marginTop: 20, backgroundColor: '#F5F6FA',
-    borderRadius: 14, padding: 16, gap: 0, width: '100%',
+    borderRadius: 14, padding: 16, width: '100%',
   },
   statItem: { flex: 1, alignItems: 'center' },
   statValue: { fontSize: 20, fontWeight: '800', color: '#1A1A2E' },
@@ -161,26 +194,29 @@ const styles = StyleSheet.create({
   },
   menuItem: {
     flexDirection: 'row', alignItems: 'center',
-    paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#F5F6FA',
+    paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#F5F6FA',
+    gap: 12,
   },
-  menuIcon: { fontSize: 20, marginRight: 12 },
+  menuIconWrapper: {
+    width: 36, height: 36, borderRadius: 10,
+    justifyContent: 'center', alignItems: 'center',
+  },
   menuLabel: { flex: 1, fontSize: 15, color: '#1A1A2E', fontWeight: '500' },
   menuRight: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   menuValue: { fontSize: 13, color: '#888' },
-  menuArrow: { fontSize: 20, color: '#ccc' },
   infoItem: {
     flexDirection: 'row', justifyContent: 'space-between',
     alignItems: 'center', paddingVertical: 10,
     borderBottomWidth: 1, borderBottomColor: '#F5F6FA',
   },
+  infoLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   infoLabel: { fontSize: 14, color: '#888' },
-  infoValue: { fontSize: 14, color: '#1A1A2E', fontWeight: '600' },
+  infoValue: { fontSize: 14, color: '#1A1A2E', fontWeight: '600', maxWidth: '60%', textAlign: 'right' },
   logoutBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     margin: 20, backgroundColor: '#FFF0F0', borderRadius: 14,
     paddingVertical: 14, gap: 8,
     borderWidth: 1, borderColor: '#FFCDD2',
   },
-  logoutIcon: { fontSize: 20 },
   logoutText: { fontSize: 16, fontWeight: '700', color: '#E53935' },
 });
