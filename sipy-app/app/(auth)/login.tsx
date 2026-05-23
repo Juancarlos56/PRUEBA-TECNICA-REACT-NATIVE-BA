@@ -4,6 +4,7 @@ import {
   StyleSheet, ActivityIndicator, KeyboardAvoidingView,
   Platform, ScrollView,
 } from 'react-native';
+import { useMutation } from '@tanstack/react-query';
 import { useAuth } from '../../src/context/AuthContext';
 import { useRouter } from 'expo-router';
 
@@ -15,7 +16,6 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ username?: string; password?: string }>({});
 
   useEffect(() => {
@@ -23,6 +23,10 @@ export default function LoginScreen() {
       router.replace('/(app)/(tabs)/home');
     }
   }, [isAuthenticated]);
+
+  const loginMutation = useMutation({
+    mutationFn: () => login(username.trim(), password, remember),
+  });
 
   const validate = () => {
     const newErrors: { username?: string; password?: string } = {};
@@ -46,11 +50,9 @@ export default function LoginScreen() {
     !/\s/.test(password) &&
     !/[^a-zA-Z0-9]/.test(password);
 
-  const handleLogin = async () => {
-    if (!validate() || loading) return;
-    setLoading(true);
-    await login(username.trim(), password, remember);
-    setLoading(false);
+  const handleLogin = () => {
+    if (!validate() || loginMutation.isPending) return;
+    loginMutation.mutate();
   };
 
   return (
@@ -102,6 +104,9 @@ export default function LoginScreen() {
           {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
 
           {authError ? <Text style={styles.authError}>{authError}</Text> : null}
+          {loginMutation.isError ? (
+            <Text style={styles.authError}>Error al conectar con el servidor</Text>
+          ) : null}
 
           <View style={styles.row}>
             <TouchableOpacity style={styles.checkboxRow} onPress={() => setRemember((v) => !v)}>
@@ -113,11 +118,11 @@ export default function LoginScreen() {
           </View>
 
           <TouchableOpacity
-            style={[styles.button, (!isFormValid || loading) && styles.buttonDisabled]}
+            style={[styles.button, (!isFormValid || loginMutation.isPending) && styles.buttonDisabled]}
             onPress={handleLogin}
-            disabled={!isFormValid || loading}
+            disabled={!isFormValid || loginMutation.isPending}
           >
-            {loading ? (
+            {loginMutation.isPending ? (
               <ActivityIndicator color="#fff" />
             ) : (
               <Text style={styles.buttonText}>Iniciar sesión</Text>

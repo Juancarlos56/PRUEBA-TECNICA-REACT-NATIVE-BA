@@ -1,6 +1,6 @@
 import {
   View, Text, StyleSheet, ScrollView,
-  TouchableOpacity, Image, FlatList, RefreshControl,
+  TouchableOpacity, Image, RefreshControl,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../../src/context/AuthContext';
@@ -9,6 +9,10 @@ import { useQuery } from '@tanstack/react-query';
 import { getCategories, getProducts } from '../../../src/services/products.service';
 import { QUERY_KEYS } from '../../../src/constants';
 import { Product } from '../../../src/types';
+import {
+  HomeCategorySkeleton,
+  HomeFeaturedSkeleton,
+} from '../../../src/components/SkeletonLoader';
 
 export default function HomeScreen() {
   const { user } = useAuth();
@@ -51,9 +55,7 @@ export default function HomeScreen() {
           <Image source={{ uri: user.image }} style={styles.avatar} />
         ) : (
           <View style={styles.avatarPlaceholder}>
-            <Text style={styles.avatarText}>
-              {user?.firstName?.charAt(0)}
-            </Text>
+            <Text style={styles.avatarText}>{user?.firstName?.charAt(0)}</Text>
           </View>
         )}
       </View>
@@ -77,25 +79,23 @@ export default function HomeScreen() {
             <Text style={styles.seeAll}>Ver todas</Text>
           </TouchableOpacity>
         </View>
-
         {loadingCats ? (
-          <View style={styles.skeletonRow}>
-            {[1, 2, 3, 4].map((i) => (
-              <View key={i} style={styles.skeletonCat} />
-            ))}
-          </View>
+          <HomeCategorySkeleton />
         ) : (
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {categories.map((cat) => (
               <TouchableOpacity
                 key={cat.slug}
                 style={styles.categoryCard}
-                onPress={() => router.push({ pathname: '/(app)/(tabs)/explore', params: { category: cat.slug } })}
+                onPress={() =>
+                  router.push({
+                    pathname: '/(app)/(tabs)/explore',
+                    params: { category: cat.slug },
+                  })
+                }
               >
                 <Text style={styles.categoryEmoji}>🛍️</Text>
-                <Text style={styles.categoryName} numberOfLines={1}>
-                  {cat.name}
-                </Text>
+                <Text style={styles.categoryName} numberOfLines={1}>{cat.name}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -110,7 +110,6 @@ export default function HomeScreen() {
             <Text style={styles.seeAll}>Ver todos</Text>
           </TouchableOpacity>
         </View>
-
         {favorites.length === 0 ? (
           <View style={styles.emptyFav}>
             <Text style={styles.emptyFavEmoji}>❤️</Text>
@@ -142,13 +141,8 @@ export default function HomeScreen() {
             <Text style={styles.seeAll}>Ver todos</Text>
           </TouchableOpacity>
         </View>
-
         {loadingProducts ? (
-          <View style={styles.skeletonRow}>
-            {[1, 2, 3].map((i) => (
-              <View key={i} style={styles.skeletonProduct} />
-            ))}
-          </View>
+          <HomeFeaturedSkeleton />
         ) : (
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {featured.map((product: Product) => (
@@ -178,13 +172,9 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F5F6FA' },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 16,
-    backgroundColor: '#fff',
+    flexDirection: 'row', justifyContent: 'space-between',
+    alignItems: 'center', paddingHorizontal: 20,
+    paddingTop: 60, paddingBottom: 16, backgroundColor: '#fff',
   },
   greeting: { fontSize: 20, fontWeight: '700', color: '#1A1A2E' },
   subGreeting: { fontSize: 13, color: '#888', marginTop: 2 },
@@ -221,15 +211,13 @@ const styles = StyleSheet.create({
   emptyFavText: { fontSize: 15, fontWeight: '600', color: '#333' },
   emptyFavSub: { fontSize: 12, color: '#888', marginTop: 4 },
   favCard: {
-    marginLeft: 16, width: 110, backgroundColor: '#F9F9F9',
-    borderRadius: 12, padding: 10,
+    marginLeft: 16, width: 110, backgroundColor: '#F9F9F9', borderRadius: 12, padding: 10,
   },
   favImage: { width: '100%', height: 80, borderRadius: 8, resizeMode: 'cover' },
   favTitle: { fontSize: 12, fontWeight: '600', color: '#333', marginTop: 6 },
   favPrice: { fontSize: 13, fontWeight: '700', color: '#3B4FE4', marginTop: 2 },
   featuredCard: {
-    marginLeft: 16, width: 140, backgroundColor: '#F9F9F9',
-    borderRadius: 12, padding: 10,
+    marginLeft: 16, width: 140, backgroundColor: '#F9F9F9', borderRadius: 12, padding: 10,
   },
   featuredImage: { width: '100%', height: 100, borderRadius: 8, resizeMode: 'cover' },
   featuredTitle: { fontSize: 12, fontWeight: '600', color: '#333', marginTop: 6 },
@@ -237,13 +225,4 @@ const styles = StyleSheet.create({
   ratingRow: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
   star: { fontSize: 11 },
   ratingText: { fontSize: 11, color: '#888', marginLeft: 2 },
-  skeletonRow: { flexDirection: 'row', paddingHorizontal: 16 },
-  skeletonCat: {
-    width: 80, height: 80, borderRadius: 12,
-    backgroundColor: '#E0E0E0', marginRight: 12,
-  },
-  skeletonProduct: {
-    width: 140, height: 160, borderRadius: 12,
-    backgroundColor: '#E0E0E0', marginRight: 12,
-  },
 });

@@ -10,6 +10,7 @@ import { getCategories, getProducts, getProductsByCategory, searchProducts } fro
 import { QUERY_KEYS } from '../../../src/constants';
 import { useFavorites } from '../../../src/context/FavoritesContext';
 import { Product } from '../../../src/types';
+import { ProductListSkeleton } from '../../../src/components/SkeletonLoader';
 
 const SORT_OPTIONS = [
   { key: 'default', label: 'Relevancia' },
@@ -115,10 +116,7 @@ export default function ExploreScreen() {
     >
       <View style={styles.imageContainer}>
         <Image source={{ uri: item.thumbnail }} style={styles.productImage} />
-        <TouchableOpacity
-          style={styles.favButton}
-          onPress={() => toggleFavorite(item)}
-        >
+        <TouchableOpacity style={styles.favButton} onPress={() => toggleFavorite(item)}>
           <Text style={styles.favIcon}>{isFavorite(item.id) ? '❤️' : '🤍'}</Text>
         </TouchableOpacity>
         {item.stock < 10 && (
@@ -164,12 +162,10 @@ export default function ExploreScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Explorar</Text>
       </View>
 
-      {/* Buscador */}
       <View style={styles.searchRow}>
         <View style={styles.searchContainer}>
           <Text style={styles.searchIcon}>🔍</Text>
@@ -196,7 +192,6 @@ export default function ExploreScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Sort options */}
       {showSort && (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.sortRow}>
           {SORT_OPTIONS.map((opt) => (
@@ -213,7 +208,6 @@ export default function ExploreScreen() {
         </ScrollView>
       )}
 
-      {/* Categorías */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -241,12 +235,10 @@ export default function ExploreScreen() {
         ))}
       </ScrollView>
 
-      {/* Lista */}
       {isLoading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#3B4FE4" />
-          <Text style={styles.loadingText}>Cargando productos...</Text>
-        </View>
+        <ScrollView>
+          <ProductListSkeleton />
+        </ScrollView>
       ) : (
         <FlatList
           data={sortedProducts}
@@ -321,8 +313,6 @@ const styles = StyleSheet.create({
   categoryChipActive: { backgroundColor: '#3B4FE4', borderColor: '#3B4FE4' },
   categoryChipText: { fontSize: 13, color: '#555', fontWeight: '500' },
   categoryChipTextActive: { color: '#fff', fontWeight: '600' },
-  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
-  loadingText: { color: '#888', fontSize: 14 },
   listContent: { padding: 12, paddingBottom: 80 },
   columnWrapper: { gap: 12 },
   productCard: {
