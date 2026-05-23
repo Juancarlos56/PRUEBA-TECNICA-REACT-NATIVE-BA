@@ -1,12 +1,19 @@
-import { useState, useEffect } from 'react';
-import {
-  View, Text, TextInput, TouchableOpacity,
-  StyleSheet, ActivityIndicator, KeyboardAvoidingView,
-  Platform, ScrollView,
-} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useMutation } from '@tanstack/react-query';
-import { useAuth } from '../../src/context/AuthContext';
 import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Dimensions,
+  KeyboardAvoidingView,
+  Platform, ScrollView,
+  StyleSheet,
+  Text, TextInput, TouchableOpacity,
+  View,
+} from 'react-native';
+import { useAuth } from '../../src/context/AuthContext';
+
+const { width } = Dimensions.get('window');
 
 export default function LoginScreen() {
   const { login, authError, isAuthenticated } = useAuth();
@@ -19,9 +26,7 @@ export default function LoginScreen() {
   const [errors, setErrors] = useState<{ username?: string; password?: string }>({});
 
   useEffect(() => {
-    if (isAuthenticated) {
-      router.replace('/(app)/(tabs)/home');
-    }
+    if (isAuthenticated) router.replace('/(app)/(tabs)/home');
   }, [isAuthenticated]);
 
   const loginMutation = useMutation({
@@ -63,70 +68,112 @@ export default function LoginScreen() {
       <ScrollView
         contentContainerStyle={styles.container}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        <View style={styles.header}>
+        {/* Logo */}
+        <View style={styles.logoSection}>
           <Text style={styles.logo}>SIPY</Text>
           <Text style={styles.welcome}>¡Bienvenido!</Text>
           <Text style={styles.subtitle}>Ingresa a tu cuenta</Text>
         </View>
 
+        {/* Form */}
         <View style={styles.form}>
-          <TextInput
-            style={[styles.input, errors.username ? styles.inputError : null]}
-            placeholder="Usuario"
-            placeholderTextColor="#999"
-            value={username}
-            onChangeText={(t) => {
-              setUsername(t);
-              if (errors.username) setErrors((e) => ({ ...e, username: undefined }));
-            }}
-            autoCapitalize="none"
-          />
-          {errors.username ? <Text style={styles.errorText}>{errors.username}</Text> : null}
-
-          <View style={[styles.passwordContainer, errors.password ? styles.inputError : null]}>
-            <TextInput
-              style={styles.inputPassword}
-              placeholder="Contraseña"
-              placeholderTextColor="#999"
-              value={password}
-              onChangeText={(t) => {
-                setPassword(t);
-                if (errors.password) setErrors((e) => ({ ...e, password: undefined }));
-              }}
-              secureTextEntry={!showPassword}
-              autoCapitalize="none"
-            />
-            <TouchableOpacity style={styles.eyeButton} onPress={() => setShowPassword((v) => !v)}>
-              <Text style={styles.eyeIcon}>{showPassword ? '🙈' : '👁️'}</Text>
-            </TouchableOpacity>
+          {/* Username */}
+          <View>
+            <View style={[styles.inputWrapper, errors.username ? styles.inputWrapperError : null]}>
+              <TextInput
+                style={styles.input}
+                placeholder="Email"
+                placeholderTextColor="rgba(255,255,255,0.5)"
+                value={username}
+                onChangeText={(t) => {
+                  setUsername(t);
+                  if (errors.username) setErrors((e) => ({ ...e, username: undefined }));
+                }}
+                autoCapitalize="none"
+                keyboardType="email-address"
+              />
+            </View>
+            {errors.username ? (
+              <Text style={styles.errorText}>{errors.username}</Text>
+            ) : null}
           </View>
-          {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
 
+          {/* Password */}
+          <View>
+            <View style={[styles.inputWrapper, errors.password ? styles.inputWrapperError : null]}>
+              <TextInput
+                style={[styles.input, { flex: 1 }]}
+                placeholder="Contraseña"
+                placeholderTextColor="rgba(255,255,255,0.5)"
+                value={password}
+                onChangeText={(t) => {
+                  setPassword(t);
+                  if (errors.password) setErrors((e) => ({ ...e, password: undefined }));
+                }}
+                secureTextEntry={!showPassword}
+                autoCapitalize="none"
+              />
+              <TouchableOpacity
+                style={styles.eyeButton}
+                onPress={() => setShowPassword((v) => !v)}
+              >
+                <Ionicons
+                  name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                  size={22}
+                  color="rgba(255,255,255,0.7)"
+                />
+              </TouchableOpacity>
+            </View>
+            {errors.password ? (
+              <Text style={styles.errorText}>{errors.password}</Text>
+            ) : null}
+          </View>
+
+          {/* Error general */}
           {authError ? <Text style={styles.authError}>{authError}</Text> : null}
           {loginMutation.isError ? (
             <Text style={styles.authError}>Error al conectar con el servidor</Text>
           ) : null}
 
-          <View style={styles.row}>
-            <TouchableOpacity style={styles.checkboxRow} onPress={() => setRemember((v) => !v)}>
+          {/* Recordar + Olvidaste */}
+          <View style={styles.optionsRow}>
+            <TouchableOpacity
+              style={styles.checkboxRow}
+              onPress={() => setRemember((v) => !v)}
+            >
               <View style={[styles.checkbox, remember && styles.checkboxChecked]}>
                 {remember && <Text style={styles.checkmark}>✓</Text>}
               </View>
               <Text style={styles.rememberText}>Recordar sesión</Text>
             </TouchableOpacity>
+            <TouchableOpacity>
+              <Text style={styles.forgotText}>¿Olvidaste tu contraseña?</Text>
+            </TouchableOpacity>
           </View>
 
+          {/* Botón login */}
           <TouchableOpacity
-            style={[styles.button, (!isFormValid || loginMutation.isPending) && styles.buttonDisabled]}
+            style={[
+              styles.button,
+              (!isFormValid || loginMutation.isPending) && styles.buttonDisabled,
+            ]}
             onPress={handleLogin}
             disabled={!isFormValid || loginMutation.isPending}
+            activeOpacity={0.85}
           >
             {loginMutation.isPending ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color="#3B4FE4" />
             ) : (
               <Text style={styles.buttonText}>Iniciar sesión</Text>
             )}
+          </TouchableOpacity>
+
+          {/* Registro */}
+          <TouchableOpacity style={styles.registerRow}>
+            <Text style={styles.registerText}>¿No tienes cuenta? </Text>
+            <Text style={styles.registerLink}>Regístrate</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -136,46 +183,146 @@ export default function LoginScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    flexGrow: 1, backgroundColor: '#3B4FE4',
-    justifyContent: 'center', padding: 24,
+    flexGrow: 1,
+    backgroundColor: '#3B4FE4',
+    paddingHorizontal: 28,
+    paddingTop: 80,
+    paddingBottom: 40,
   },
-  header: { alignItems: 'center', marginBottom: 40 },
-  logo: { fontSize: 42, fontWeight: '900', color: '#fff', letterSpacing: 4, marginBottom: 12 },
-  welcome: { fontSize: 22, fontWeight: '700', color: '#fff' },
-  subtitle: { fontSize: 14, color: 'rgba(255,255,255,0.8)', marginTop: 4 },
-  form: { backgroundColor: '#fff', borderRadius: 20, padding: 24, gap: 12 },
+  logoSection: {
+    marginTop: 100,
+    alignItems: 'center',
+    marginBottom: 48,
+  },
+  logo: {
+    fontSize: 52,
+    fontWeight: '900',
+    color: '#fff',
+    letterSpacing: 6,
+    marginBottom: 16,
+  },
+  welcome: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#fff',
+    marginBottom: 6,
+  },
+  subtitle: {
+    fontSize: 15,
+    color: 'rgba(255,255,255,0.7)',
+  },
+  form: {
+    gap: 16,
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 18,
+    height: 56,
+  },
+  inputWrapperError: {
+    borderColor: '#FF6B6B',
+  },
   input: {
-    borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 10,
-    paddingHorizontal: 16, paddingVertical: 12, fontSize: 15,
-    color: '#333', backgroundColor: '#F9F9F9',
+    flex: 1,
+    fontSize: 15,
+    color: '#fff',
+    paddingVertical: 0,
   },
-  inputError: { borderColor: '#E53935' },
-  passwordContainer: {
-    flexDirection: 'row', alignItems: 'center',
-    borderWidth: 1, borderColor: '#E0E0E0',
-    borderRadius: 10, backgroundColor: '#F9F9F9',
+  eyeButton: {
+    paddingLeft: 10,
   },
-  inputPassword: {
-    flex: 1, paddingHorizontal: 16, paddingVertical: 12,
-    fontSize: 15, color: '#333',
-  },
-  eyeButton: { paddingHorizontal: 12 },
   eyeIcon: { fontSize: 18 },
-  errorText: { color: '#E53935', fontSize: 12, marginTop: -6, marginLeft: 4 },
-  authError: { color: '#E53935', fontSize: 13, textAlign: 'center', fontWeight: '600' },
-  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  checkboxRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  errorText: {
+    color: '#FF6B6B',
+    fontSize: 12,
+    marginTop: 4,
+    marginLeft: 4,
+  },
+  authError: {
+    color: '#FF6B6B',
+    fontSize: 13,
+    textAlign: 'center',
+    fontWeight: '600',
+    backgroundColor: 'rgba(255,107,107,0.15)',
+    padding: 10,
+    borderRadius: 10,
+  },
+  optionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: -4,
+  },
+  checkboxRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   checkbox: {
-    width: 20, height: 20, borderWidth: 2, borderColor: '#3B4FE4',
-    borderRadius: 4, justifyContent: 'center', alignItems: 'center',
+    width: 20,
+    height: 20,
+    borderRadius: 5,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  checkboxChecked: { backgroundColor: '#3B4FE4' },
-  checkmark: { color: '#fff', fontSize: 12, fontWeight: '700' },
-  rememberText: { fontSize: 13, color: '#555' },
+  checkboxChecked: {
+    backgroundColor: '#fff',
+    borderColor: '#fff',
+  },
+  checkmark: {
+    color: '#3B4FE4',
+    fontSize: 12,
+    fontWeight: '900',
+  },
+  rememberText: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.8)',
+  },
+  forgotText: {
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.8)',
+  },
   button: {
-    backgroundColor: '#3B4FE4', borderRadius: 10,
-    paddingVertical: 14, alignItems: 'center', marginTop: 8,
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    height: 56,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 4,
   },
-  buttonDisabled: { backgroundColor: '#A0A8F0' },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  buttonDisabled: {
+    backgroundColor: 'rgba(255,255,255,0.4)',
+  },
+  buttonText: {
+    color: '#3B4FE4',
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  registerRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 8,
+  },
+  registerText: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 14,
+  },
+  registerLink: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '700',
+  },
 });
